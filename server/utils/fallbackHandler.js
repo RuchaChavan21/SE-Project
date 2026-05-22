@@ -12,23 +12,22 @@ export const executeAICall = async (prompt, type) => {
   let provider = '';
 
   try {
-    // 1. Try Gemini
-    console.log('[AI Handler] Attempting Gemini...');
+    // 1. Try Gemini (PRIMARY)
+    console.log('\n[AI Orchestrator] Attempting Gemini as primary provider...');
     responseData = await getGeminiResponse(prompt);
     provider = 'gemini';
   } catch (geminiError) {
-    console.error('[AI Handler] Gemini failed:', geminiError.message);
+    console.error(`[AI Orchestrator] Gemini failed (${geminiError.message}), switching to Grok...`);
     
     try {
       // 2. Try Grok Fallback
-      console.log('[AI Handler] Attempting Grok Fallback...');
+      console.log('[AI Orchestrator] Attempting Grok Fallback...');
       responseData = await getGrokResponse(prompt);
       provider = 'grok';
     } catch (grokError) {
-      console.error('[AI Handler] Grok failed:', grokError.message);
+      console.error(`[AI Orchestrator] Grok failed (${grokError.message}). Fallback mock response activated.`);
       
-      // 3. Fallback to Mock Data
-      console.log('[AI Handler] Using Mock Fallback...');
+      // 3. Fallback to Mock Data (FAILSAFE)
       responseData = getMockResponse(type);
       provider = 'mock';
     }
