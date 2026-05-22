@@ -1,5 +1,6 @@
 import React from 'react';
 import { useStudent } from '../context/StudentContext';
+import { useUser } from '../context/UserContext';
 import { Flame, Trophy, BookOpen, Clock, Settings, LogOut, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import BadgeGrid from '../components/gamification/BadgeGrid';
@@ -8,13 +9,13 @@ import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
   const { student, updateStudent } = useStudent();
+  const { logout } = useUser();
   const navigate = useNavigate();
 
   const handleSignOut = () => {
-    localStorage.removeItem('edupath_profile');
-    navigate('/onboarding');
-    // Force a reload to reset state cleanly
-    window.location.reload();
+    logout();
+    // Force a reload to return to landing page smoothly
+    window.location.href = '/';
   };
 
   const stats = [

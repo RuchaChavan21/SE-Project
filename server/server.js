@@ -1,10 +1,16 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import connectDB from './config/db.js';
 import aiRoutes from './routes/aiRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
+import courseRoutes from './routes/courseRoutes.js';
 
 // Load environment variables
 dotenv.config();
+
+// Connect to MongoDB
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,6 +27,8 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api', aiRoutes);
+app.use('/api', uploadRoutes);
+app.use('/api', courseRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

@@ -22,20 +22,19 @@ export const generateAIResponse = async (prompt) => {
   const startTime = Date.now();
   
   try {
-    console.log(`[AI Gateway] Attempting Gemini (Primary)`);
-    // Try Gemini once with a fast timeout (5s)
+    console.log(`[AI Gateway] Trying Gemini...`);
     const response = await getGeminiResponse(prompt);
     
-    console.log(`[AI Gateway] Success! Response time: ${Date.now() - startTime}ms. Provider: Gemini`);
+    console.log(`[AI Gateway] Response generated via Gemini (Time: ${Date.now() - startTime}ms)`);
     return { provider: 'gemini', response };
   } catch (error) {
-    // If it's a fallback condition (timeout, 429, 503, fetch failed)
     if (isFallbackCondition(error)) {
-      console.log(`[AI Gateway] Gemini failed (${error.message}). Fast failover activated: Immediately switching to Grok...`);
+      console.log(`[AI Gateway] Gemini quota exceeded or failed (${error.message})`);
+      console.log(`[AI Gateway] Falling back to Grok...`);
       try {
         const grokStartTime = Date.now();
         const grokResp = await getGrokResponse(prompt);
-        console.log(`[AI Gateway] Success! Response time: ${Date.now() - grokStartTime}ms. Provider: Grok`);
+        console.log(`[AI Gateway] Response generated via Grok (Time: ${Date.now() - grokStartTime}ms)`);
         return { provider: 'grok', response: grokResp };
       } catch (grokError) {
         console.error("[AI Gateway] Both Gemini and Grok providers failed.");

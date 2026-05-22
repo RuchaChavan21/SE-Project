@@ -4,8 +4,10 @@ import { Home, BookOpen, Brain, User, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
 import { useTheme } from '../../context/ThemeContext';
 import { Moon, Sun } from 'lucide-react';
+import { useUser } from '../../context/UserContext';
 
 const DesktopSidebar = () => {
+  const { logout } = useUser();
   const navItems = [
     { to: '/', icon: Home, label: 'Dashboard' },
     { to: '/lesson/quantum-superposition', icon: BookOpen, label: 'Learn' },
@@ -60,6 +62,12 @@ const DesktopSidebar = () => {
           ) : (
             <><Moon className="w-5 h-5" /> Dark Mode</>
           )}
+        </button>
+        <button 
+          onClick={logout} 
+          className="flex items-center gap-3 w-full px-4 py-3 mt-2 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors font-medium"
+        >
+          Switch Role / Logout
         </button>
       </div>
     </aside>
