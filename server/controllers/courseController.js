@@ -66,7 +66,7 @@ export const enrollStudent = async (req, res) => {
 export const getStudentProgress = async (req, res) => {
   try {
     const { studentId } = req.params;
-    
+
     if (isDbConnected()) {
       const enrollments = await Enrollment.find({ studentId }).populate('courseId');
       return res.json({ success: true, data: enrollments });

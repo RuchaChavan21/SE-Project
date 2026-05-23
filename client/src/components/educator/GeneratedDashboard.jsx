@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Network, Accessibility, Globe, Clock, Target, Languages, Award, ChevronRight, CheckCircle } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
-import { useCourses } from '../../context/CourseContext';
+import { usePlatformSystem } from '../../hooks/usePlatformSystem';
 
 const GeneratedDashboard = ({ data, onBack }) => {
   const { user, educatorProfile } = useUser();
@@ -28,21 +28,19 @@ const GeneratedDashboard = ({ data, onBack }) => {
     ? `${(totalTime / 60).toFixed(1)} Hours` 
     : `${totalTime || 0} Mins`;
 
-  const { publishCourse } = useCourses();
+  const { createCourse } = usePlatformSystem();
 
   const handlePublish = async () => {
     setIsPublishing(true);
     try {
-      publishCourse({
+      createCourse({
         title: safeData.subject,
         description: `Auto-generated course for ${safeData.subject}`,
-        teacherId: user?.id || 'teacher_123',
-        teacherName: educatorProfile?.name || 'Prof. AI',
         roadmap: safeData.learningPath,
         topics: safeData.topics,
         difficulty: safeData.difficulty,
         duration: formattedTime
-      });
+      }, user?.id || 'teacher_123', educatorProfile?.name || 'Prof. AI');
 
       setIsPublished(true);
       setTimeout(() => {
