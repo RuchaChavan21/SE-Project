@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Flame, Trophy, Play, Star, Sparkles, Target, ArrowRight, BrainCircuit, BookOpen, Clock } from 'lucide-react';
 import { useStudent } from '../context/StudentContext';
 import { useUser } from '../context/UserContext';
-import { useCourses } from '../context/CourseContext';
+import { usePlatformSystem } from '../hooks/usePlatformSystem';
 import { useNavigate } from 'react-router-dom';
 import StreakCounter from '../components/gamification/StreakCounter';
 
@@ -11,7 +11,7 @@ const Home = () => {
   const { student } = useStudent();
   const { user } = useUser();
   const navigate = useNavigate();
-  const { courses, enrollStudent, getMyEnrollments } = useCourses();
+  const { courses, enrollStudent, getStudentEnrollments } = usePlatformSystem();
 
   const [availableCourses, setAvailableCourses] = useState([]);
   const [myEnrollments, setMyEnrollments] = useState([]);
@@ -19,15 +19,15 @@ const Home = () => {
 
   useEffect(() => {
     // Load courses instantly from context/local storage instead of fetching from backend
-    const studentId = user?.id || 'student_123';
+    const studentId = user?.id || 'student_456';
     
     setAvailableCourses(courses);
-    setMyEnrollments(getMyEnrollments(studentId));
+    setMyEnrollments(getStudentEnrollments(studentId));
     setIsLoading(false);
-  }, [courses, user, getMyEnrollments]);
+  }, [courses, user, getStudentEnrollments]);
 
   const handleEnroll = (courseId) => {
-    const studentId = user?.id || 'student_123';
+    const studentId = user?.id || 'student_456';
     enrollStudent(studentId, courseId);
   };
 

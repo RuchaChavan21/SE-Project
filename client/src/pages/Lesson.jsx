@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, PenLine, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { useStudent } from '../context/StudentContext';
+import { usePlatformSystem } from '../hooks/usePlatformSystem';
 import { fetchLessonContent } from '../services/fakeAI';
 import useSpeech from '../hooks/useSpeech';
 
@@ -15,6 +16,8 @@ import AIChatPanel from '../components/lesson/AIChatPanel';
 import NotesPanel from '../components/notes/NotesPanel';
 import HighlightToolbar from '../components/notes/HighlightToolbar';
 import ImageDescriptionCard from '../components/accessibility/ImageDescriptionCard';
+import TopicQuizModal from '../components/lesson/TopicQuizModal';
+import AdaptiveFeedbackCard from '../components/lesson/AdaptiveFeedbackCard';
 
 import confetti from 'canvas-confetti';
 
@@ -22,6 +25,7 @@ const Lesson = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { student, updateStudent } = useStudent();
+  const { courses, completeTopic, getStudentEnrollments } = usePlatformSystem();
   const { speak, stop, isSpeaking, isSupported } = useSpeech();
 
   // Clean topic string from ID
@@ -40,6 +44,10 @@ const Lesson = () => {
   const [language, setLanguage] = useState(student.language || 'en');
   const [difficulty, setDifficulty] = useState(student.level || 'beginner');
   const [showSimplerMsg, setShowSimplerMsg] = useState(false);
+
+  // Quiz State
+  const [isQuizOpen, setIsQuizOpen] = useState(false);
+  const [quizResult, setQuizResult] = useState(null);
 
   // Panels State
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -119,24 +127,42 @@ const Lesson = () => {
     return () => stop();
   }, [stop]);
 
-  // Complete Lesson
-  const handleComplete = () => {
+  // Open Quiz Modal
+  const handleReadyForQuiz = () => {
+    stop();
+    setIsQuizOpen(true);
+  };
+
+  const handleQuizPass = (score) => {
+    setIsQuizOpen(false);
     setProgress(100);
     setIsCompleted(true);
-    stop();
-
-    // Fire Confetti
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#4f46e5', '#10b981', '#f59e0b']
-    });
-
+    setQuizResult({ passed: true, score });
+    
     // Update Profile
     updateStudent({
-      xp: (student.xp || 0) + 50,
+      xp: (student.xp || 0) + 20 + Math.round(score / 10), // Base XP + bonus
       completedTopics: [...new Set([...(student.completedTopics || []), topic])]
+    });
+
+    // Update Course Progress
+    const studentId = student.id || 'student_456';
+    const myEnrollments = getStudentEnrollments(studentId);
+    
+    // Naively update all enrollments containing this topic for demo purposes
+    // In a real app we would know exactly which course we're in
+    myEnrollments.forEach(enr => {
+      completeTopic(studentId, enr.courseId, topic, score);
+    });
+  };
+
+  const handleQuizFail = (score) => {
+    setIsQuizOpen(false);
+    setIsCompleted(true);
+    setQuizResult({ passed: false, score });
+
+    updateStudent({
+      weakTopics: [...new Set([...(student.weakTopics || []), topic])]
     });
   };
 
@@ -216,44 +242,25 @@ const Lesson = () => {
               className="flex justify-center mt-8"
             >
               <button
-                onClick={handleComplete}
+                onClick={handleReadyForQuiz}
                 className="group relative px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-semibold shadow-xl shadow-indigo-500/30 transition-all duration-300 hover:-translate-y-1 flex items-center gap-2 overflow-hidden"
               >
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
                 <span className="relative z-10 flex items-center gap-2">
-                  I understand this
+                  Take Topic Quiz
                   <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
                 </span>
               </button>
             </motion.div>
           ) : (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-3xl p-8 text-center mt-8 shadow-sm"
-            >
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Topic Mastered!</h3>
-              <p className="text-slate-600 dark:text-slate-400 mb-6">+50 XP added to your profile</p>
-              
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <button 
-                  onClick={() => navigate('/')}
-                  className="w-full sm:w-auto px-6 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-medium transition-colors"
-                >
-                  Back to Path
-                </button>
-                <button 
-                  onClick={() => navigate(`/lesson/${content.nextTopic.replace(/\s+/g, '-').toLowerCase()}`)}
-                  className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 transition-colors"
-                >
-                  Next Topic
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-            </motion.div>
+            quizResult && (
+              <AdaptiveFeedbackCard 
+                isPass={quizResult.passed} 
+                score={Math.round(quizResult.score)} 
+                topic={topic}
+                nextTopic={content.nextTopic}
+              />
+            )
           )}
         </AnimatePresence>
 
@@ -313,6 +320,16 @@ const Lesson = () => {
         isOpen={isNotesOpen} 
         onClose={() => setIsNotesOpen(false)} 
         topic={topic}
+      />
+
+      {/* Quiz Modal */}
+      <TopicQuizModal
+        isOpen={isQuizOpen}
+        onClose={() => setIsQuizOpen(false)}
+        topic={topic}
+        course={courses?.[0]} // Pass the first course or current course for demo
+        onPass={handleQuizPass}
+        onFail={handleQuizFail}
       />
     </div>
   );

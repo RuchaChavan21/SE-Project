@@ -5,16 +5,16 @@ import './styles/globals.css'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { StudentProvider } from './context/StudentContext.jsx'
 import { UserProvider } from './context/UserContext.jsx'
-import { CourseProvider } from './context/CourseContext.jsx'
+import { PlatformStateProvider } from './context/PlatformStateProvider.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ThemeProvider>
       <UserProvider>
         <StudentProvider>
-          <CourseProvider>
+          <PlatformStateProvider>
             <App />
-          </CourseProvider>
+          </PlatformStateProvider>
         </StudentProvider>
       </UserProvider>
     </ThemeProvider>
